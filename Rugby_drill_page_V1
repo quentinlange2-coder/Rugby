@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drill Book — 10 Rugby Sessions</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto+Condensed:wght@300;400;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pitch:#12331f;
+  --pitch-deep:#0b2115;
+  --chalk:#f2efe6;
+  --mud:#8a7f6a;
+  --jersey:#e04e2a;
+  --line:rgba(242,239,230,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--pitch-deep);
+  color:var(--chalk);
+  font-family:'Roboto Condensed',sans-serif;
+  font-weight:300;
+  line-height:1.55;
+  padding:0 0 80px;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+/* HERO */
+header{
+  border-bottom:2px solid var(--line);
+  padding:64px 0 36px;
+  background:
+    repeating-linear-gradient(90deg,transparent 0 79px,rgba(242,239,230,.05) 79px 80px),
+    var(--pitch);
+}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--jersey);margin-bottom:14px;
+}
+h1{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(52px,11vw,120px);
+  line-height:.86;letter-spacing:.01em;
+}
+h1 em{font-style:normal;color:var(--jersey)}
+.sub{max-width:52ch;margin-top:18px;color:rgba(242,239,230,.72);font-size:17px}
+
+/* FILTERS */
+.controls{
+  position:sticky;top:0;z-index:20;
+  background:rgba(11,33,21,.94);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+  padding:14px 0;
+}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row + .row{margin-top:10px}
+.tag{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--mud);margin-right:6px;min-width:62px;
+}
+button.f{
+  background:transparent;color:var(--chalk);
+  border:1px solid var(--line);border-radius:999px;
+  padding:6px 15px;font-family:'Roboto Condensed',sans-serif;
+  font-size:13px;letter-spacing:.06em;text-transform:uppercase;
+  cursor:pointer;transition:.16s;
+}
+button.f:hover{border-color:var(--chalk)}
+button.f[aria-pressed="true"]{background:var(--jersey);border-color:var(--jersey);color:#fff;font-weight:700}
+button.f:focus-visible{outline:2px solid var(--chalk);outline-offset:2px}
+.count{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mud);margin-left:auto}
+
+/* CARDS */
+.grid{margin-top:36px;display:grid;gap:2px;background:var(--line)}
+article{background:var(--pitch);padding:0;transition:.2s}
+article.hide{display:none}
+.head{
+  display:flex;gap:18px;align-items:baseline;
+  padding:22px 26px;cursor:pointer;user-select:none;
+}
+.head:hover{background:rgba(242,239,230,.04)}
+.num{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--jersey);font-weight:600}
+h2{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.02em;flex:1;font-weight:400}
+.theme{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mud)}
+.diff{display:flex;gap:3px;align-items:center}
+.pip{width:9px;height:9px;border:1px solid var(--mud);transform:rotate(45deg)}
+.pip.on{background:var(--jersey);border-color:var(--jersey)}
+.chev{color:var(--mud);font-size:18px;transition:.2s}
+article.open .chev{transform:rotate(180deg)}
+.body{display:none;padding:0 26px 28px 26px;max-width:74ch}
+article.open .body{display:block}
+.body h3{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--jersey);margin:16px 0 6px;font-weight:600;
+}
+.body p{font-size:16px;color:rgba(242,239,230,.86)}
+.meta{
+  margin-top:20px;padding-top:14px;border-top:1px solid var(--line);
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mud);
+  display:flex;gap:22px;flex-wrap:wrap;
+}
+footer{margin-top:48px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mud);text-align:center}
+.empty{padding:60px 26px;text-align:center;color:var(--mud);background:var(--pitch)}
+@media(max-width:640px){
+  .head{flex-wrap:wrap;gap:10px;padding:18px}
+  h2{flex-basis:100%;order:3}
+  .body{padding:0 18px 22px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Session planner / 10 drills</div>
+    <h1>The <em>Drill</em><br>Book</h1>
+    <p class="sub">Ten drills across five coaching themes. Tap any drill to open the setup, the objective, and what to look for. Filter by theme or difficulty to build a session.</p>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="wrap">
+    <div class="row">
+      <span class="tag">Theme</span>
+      <button class="f" data-type="theme" data-val="all" aria-pressed="true">All</button>
+      <button class="f" data-type="theme" data-val="Tackle &amp; contact" aria-pressed="false">Tackle &amp; contact</button>
+      <button class="f" data-type="theme" data-val="Attack skills" aria-pressed="false">Attack skills</button>
+      <button class="f" data-type="theme" data-val="Defence skills" aria-pressed="false">Defence skills</button>
+      <button class="f" data-type="theme" data-val="Team organisation" aria-pressed="false">Team organisation</button>
+      <button class="f" data-type="theme" data-val="Game situation" aria-pressed="false">Game situation</button>
+    </div>
+    <div class="row">
+      <span class="tag">Level</span>
+      <button class="f" data-type="diff" data-val="all" aria-pressed="true">All</button>
+      <button class="f" data-type="diff" data-val="1" aria-pressed="false">Beginner</button>
+      <button class="f" data-type="diff" data-val="2" aria-pressed="false">Intermediate</button>
+      <button class="f" data-type="diff" data-val="3" aria-pressed="false">Advanced</button>
+      <span class="count" id="count">10 drills</span>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none">No drills match those filters. Widen the theme or level.</div>
+  <footer>Adjust numbers and space to suit your squad. Contact work always follows a full warm-up.</footer>
+</main>
+
+<script>
+const drills = [
+ {n:1,t:"Tackle &amp; contact",title:"Knee-Height Cheek-to-Cheek Tackles",d:1,
+  players:"Pairs",time:"10 min",space:"5m × 5m grids",
+  how:"Pairs kneel facing each other a metre apart. The tackler steps in, places the shoulder on the ball carrier's thigh, cheek to the outside hip, wraps both arms and rolls to the ground. Progress from kneeling to a crouch, then to a walk, then to a jog. Ball carrier stays passive throughout.",
+  obj:"Build a safe, low tackle technique with correct head placement before adding any speed.",
+  look:"Head behind or beside the carrier, never in front. Eyes open, arms wrapping and squeezing, tackler landing on top."},
+
+ {n:2,t:"Tackle &amp; contact",title:"Cone Gate Contact Cycle",d:2,
+  players:"Groups of 5",time:"12 min",space:"10m × 10m",
+  how:"A carrier runs through a 2m gate into a defender holding a shield. On contact, the carrier fights for a second push, goes to ground with the ball presented long, and two support players arrive to clear over the ball. Next carrier starts as soon as the ball is available. Run for 90-second blocks.",
+  obj:"Link the carry, the ground placement, and the arrival of support into one continuous rhythm.",
+  look:"Ball presented at full arm stretch away from the tackler. Support arriving low, in a straight line, and staying on their feet."},
+
+ {n:3,t:"Attack skills",title:"Four-Cone Draw and Pass",d:1,
+  players:"Groups of 3–4",time:"10 min",space:"15m × 15m",
+  how:"Three attackers advance against two passive defenders standing on cones. The carrier must run at the inside shoulder of a defender to commit him, then pass late to the free runner. Rotate positions each rep. Progress by letting defenders drift or press.",
+  obj:"Teach players to fix a defender before releasing the ball, rather than passing early into space that closes.",
+  look:"Straight running lines, pass delivered after the defender commits, receiver taking the ball at pace."},
+
+ {n:4,t:"Attack skills",title:"Two-Ball Overload Grid",d:3,
+  players:"8–12",time:"12 min",space:"20m × 20m",
+  how:"Two balls are live in the same grid at once, with attackers outnumbering defenders 4v3. Attackers must score by crossing the far line; if a ball is dropped or turned over, that ball resets to the coach and comes back in immediately from an unpredictable angle. Play continuous for three minutes.",
+  obj:"Force fast scanning and decision making when the picture keeps changing and the overlap is short-lived.",
+  look:"Heads up before receiving, players calling for the ball early, attackers using the extra man within two passes."},
+
+ {n:5,t:"Defence skills",title:"Three-Gate Read and React",d:2,
+  players:"Groups of 6",time:"10 min",space:"20m × 15m",
+  how:"Three gates sit five metres apart on the attacking line. Two attackers set off and choose one gate at the last moment. Two defenders must communicate, decide who takes the ball and who covers the outside, and shut down the chosen gate. Attackers can pass once.",
+  obj:"Sharpen the read between the ball defender and the outside cover, and the call that separates them.",
+  look:"An early, loud call. Defenders moving up together, inside shoulder connected, no dog-legs in the line."},
+
+ {n:6,t:"Defence skills",title:"Scramble Recovery Chase",d:3,
+  players:"10–14",time:"12 min",space:"Half pitch",
+  how:"The coach kicks or rolls the ball behind a defensive line that is facing away. On the whistle, defenders turn, locate the ball, and reorganise against three attackers who are already running. Defenders must fold back, secure the widest threat first, and force play to the touchline.",
+  obj:"Rebuild a defensive line under pressure once the original shape has been broken.",
+  look:"Fastest player covering the widest channel, communication while running backwards, defenders working in from the outside."},
+
+ {n:7,t:"Team organisation",title:"Ruck Exit and Reset",d:2,
+  players:"Full squad",time:"15 min",space:"40m × 30m",
+  how:"Set a ruck at a marked point. On the call, forwards must be in their pods and backs at the correct depth within four seconds, then play two phases before resetting. The coach varies the ruck position across the field so players learn to adjust their spacing to the touchline.",
+  obj:"Make the attacking shape after each breakdown fast, automatic, and correct regardless of field position.",
+  look:"Depth of the receiving line, no players standing flat, pods square to the gainline, scrum-half arriving first."},
+
+ {n:8,t:"Team organisation",title:"Lineout to First Phase Chain",d:3,
+  players:"Full squad",time:"15 min",space:"22m area",
+  how:"Run a lineout with a called variation, then play immediately into a pre-agreed first-phase strike move against a live defence. Repeat the same call four times, then change it. Defence is told the call on alternate reps so attackers must adapt when it is read.",
+  obj:"Connect set piece delivery to the first attacking phase without a pause in tempo.",
+  look:"Clean transfer from jumper to scrum-half, backs already moving as the ball leaves the lineout, a plan B when the move is read."},
+
+ {n:9,t:"Game situation",title:"Last Five Minutes, Three Points Down",d:3,
+  players:"Full squad",time:"15 min",space:"Full pitch",
+  how:"Attackers start on their own 22 with a five-minute clock and a three-point deficit. Defence plays fully live. The attacking side must manage territory, decide between kicking for position and running, and choose whether to take a penalty at goal or go to the corner. Play the scenario twice, then swap sides.",
+  obj:"Rehearse the decisions and the composure that decide close matches.",
+  look:"Clear leadership voices, sensible kick choices, patience through phases instead of forcing a low-percentage pass."},
+
+ {n:10,t:"Game situation",title:"Fourteen Players Under Pressure",d:2,
+  players:"Full squad",time:"12 min",space:"Half pitch",
+  how:"One team plays a defender down for a full four-minute block while the opposition attacks from 30 metres out. The short-handed side must reorganise its line, decide which channel to leave short, and buy time. Rotate which player is removed so different units have to adjust.",
+  obj:"Practise defending a numerical disadvantage without panic or a broken line.",
+  look:"The line staying connected rather than spreading thin, players talking through the gap, defenders slowing the ball at the breakdown."}
+];
+
+const grid=document.getElementById('grid');
+const emptyEl=document.getElementById('empty');
+const countEl=document.getElementById('count');
+const levels={1:'Beginner',2:'Intermediate',3:'Advanced'};
+
+grid.innerHTML = drills.map(d=>`
+<article data-theme="${d.t}" data-diff="${d.d}">
+  <div class="head" role="button" tabindex="0" aria-expanded="false">
+    <span class="num">${String(d.n).padStart(2,'0')}</span>
+    <h2>${d.title}</h2>
+    <span class="theme">${d.t}</span>
+    <span class="diff" title="${levels[d.d]}">
+      ${[1,2,3].map(i=>`<span class="pip ${i<=d.d?'on':''}"></span>`).join('')}
+    </span>
+    <span class="chev">&#9662;</span>
+  </div>
+  <div class="body">
+    <h3>How it runs</h3><p>${d.how}</p>
+    <h3>Objective</h3><p>${d.obj}</p>
+    <h3>Coaching points</h3><p>${d.look}</p>
+    <div class="meta"><span>${levels[d.d]}</span><span>${d.players}</span><span>${d.time}</span><span>${d.space}</span></div>
+  </div>
+</article>`).join('');
+
+grid.querySelectorAll('.head').forEach(h=>{
+  const toggle=()=>{const a=h.parentElement;const o=a.classList.toggle('open');h.setAttribute('aria-expanded',o);};
+  h.addEventListener('click',toggle);
+  h.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
+});
+
+let state={theme:'all',diff:'all'};
+document.querySelectorAll('button.f').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const t=b.dataset.type;
+    state[t]=b.dataset.val;
+    document.querySelectorAll(`button.f[data-type="${t}"]`).forEach(x=>x.setAttribute('aria-pressed',x===b));
+    apply();
+  });
+});
+
+function apply(){
+  let n=0;
+  grid.querySelectorAll('article').forEach(a=>{
+    const ok=(state.theme==='all'||a.dataset.theme===state.theme)&&(state.diff==='all'||a.dataset.diff===state.diff);
+    a.classList.toggle('hide',!ok);
+    if(ok)n++;
+  });
+  countEl.textContent=n+(n===1?' drill':' drills');
+  emptyEl.style.display=n?'none':'block';
+}
+</script>
+</body>
+</html>
