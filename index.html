@@ -13,126 +13,180 @@
   <div class="wrap">
     <div class="eyebrow">Session planner / drill library</div>
     <h1>The <em>Drill</em><br>Book</h1>
-    <p class="sub">Browse the drill library, or build a training session: pick a day on the calendar and add drills to it. Filter by theme or difficulty as you go.</p>
+    <p class="sub">Browse the drill library, build a training session, or manage the drills themselves. Everything is shared across coaches.</p>
   </div>
 </header>
 
-<!-- VIEW SWITCHER -->
+<!-- sign-in bar -->
 <div class="wrap">
-  <div class="views" role="tablist" aria-label="Choose a view">
-    <button class="viewtab" id="tab-browse" role="tab" aria-selected="true"  aria-controls="panel-browse">Browse drills</button>
-    <button class="viewtab" id="tab-plan"   role="tab" aria-selected="false" aria-controls="panel-plan">Plan a session</button>
+  <div class="authbar">
+    <span class="who" id="whoami"></span>
+    <button class="ghost" id="signOutBtn" hidden>Sign out</button>
   </div>
 </div>
 
-<!-- ============ PANEL 1: BROWSE (your original page) ============ -->
-<section class="panel" id="panel-browse" role="tabpanel" aria-labelledby="tab-browse">
-  <div class="controls">
-    <div class="wrap">
-      <div class="row">
-        <span class="tag">Theme</span>
-        <button class="f" data-type="theme" data-val="all" aria-pressed="true">All</button>
-        <button class="f" data-type="theme" data-val="Tackle &amp; contact" aria-pressed="false">Tackle &amp; contact</button>
-        <button class="f" data-type="theme" data-val="Attack skills" aria-pressed="false">Attack skills</button>
-        <button class="f" data-type="theme" data-val="Defence skills" aria-pressed="false">Defence skills</button>
-        <button class="f" data-type="theme" data-val="Team organisation" aria-pressed="false">Team organisation</button>
-        <button class="f" data-type="theme" data-val="Game situation" aria-pressed="false">Game situation</button>
-      </div>
-      <div class="row">
-        <span class="tag">Level</span>
-        <button class="f" data-type="diff" data-val="all" aria-pressed="true">All</button>
-        <button class="f" data-type="diff" data-val="1" aria-pressed="false">Beginner</button>
-        <button class="f" data-type="diff" data-val="2" aria-pressed="false">Intermediate</button>
-        <button class="f" data-type="diff" data-val="3" aria-pressed="false">Advanced</button>
-        <span class="count" id="count">10 drills</span>
-      </div>
+<!-- sign-in gate: shown until an approved coach signs in -->
+<div class="wrap">
+  <div class="gate" id="authGate">
+    <div class="gatecard">
+      <div class="eyebrow">Coaches only</div>
+      <p class="gatemsg" id="authMsg">Sign in with your coach Google account to view and plan sessions.</p>
+      <button class="signin" id="signInBtn">Sign in with Google</button>
+    </div>
+  </div>
+</div>
+
+<!-- the whole app, hidden until an approved coach signs in -->
+<div id="plannerBody" hidden>
+
+  <!-- VIEW SWITCHER -->
+  <div class="wrap">
+    <div class="views" role="tablist" aria-label="Choose a view">
+      <button class="viewtab" id="tab-browse" role="tab" aria-selected="true"  aria-controls="panel-browse">Browse drills</button>
+      <button class="viewtab" id="tab-plan"   role="tab" aria-selected="false" aria-controls="panel-plan">Plan a session</button>
+      <button class="viewtab" id="tab-manage" role="tab" aria-selected="false" aria-controls="panel-manage">Manage drills</button>
     </div>
   </div>
 
-  <main class="wrap">
-    <div class="grid" id="grid"></div>
-    <div class="empty" id="empty" style="display:none">No drills match those filters. Widen the theme or level.</div>
-    <footer>Adjust numbers and space to suit your squad. Contact work always follows a full warm-up.</footer>
-  </main>
-</section>
-
-<!-- ============ PANEL 2: PLAN A SESSION ============ -->
-<section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" hidden>
-  <main class="wrap">
-
-    <!-- session bar: who's signed in -->
-    <div class="authbar">
-      <span class="who" id="whoami"></span>
-      <button class="ghost" id="signOutBtn" hidden>Sign out</button>
-    </div>
-
-    <!-- sign-in gate: shown until an approved coach signs in -->
-    <div class="gate" id="authGate">
-      <div class="gatecard">
-        <div class="eyebrow">Coaches only</div>
-        <p class="gatemsg" id="authMsg">Sign in with your coach Google account to view and plan sessions.</p>
-        <button class="signin" id="signInBtn">Sign in with Google</button>
-      </div>
-    </div>
-
-    <!-- the actual planner, hidden until signed in -->
-    <div id="plannerBody" hidden>
-    <div class="planner">
-
-      <!-- left: calendar -->
-      <div class="pane">
-        <h3>Pick a day</h3>
-        <div class="calbar">
-          <button id="calPrev" aria-label="Previous month">&#8249;</button>
-          <span id="calLabel">Month</span>
-          <button id="calNext" aria-label="Next month">&#8250;</button>
+  <!-- ============ PANEL 1: BROWSE ============ -->
+  <section class="panel" id="panel-browse" role="tabpanel" aria-labelledby="tab-browse">
+    <div class="controls">
+      <div class="wrap">
+        <div class="row">
+          <span class="tag">Theme</span>
+          <button class="f" data-type="theme" data-val="all" aria-pressed="true">All</button>
+          <button class="f" data-type="theme" data-val="Tackle &amp; contact" aria-pressed="false">Tackle &amp; contact</button>
+          <button class="f" data-type="theme" data-val="Attack skills" aria-pressed="false">Attack skills</button>
+          <button class="f" data-type="theme" data-val="Defence skills" aria-pressed="false">Defence skills</button>
+          <button class="f" data-type="theme" data-val="Team organisation" aria-pressed="false">Team organisation</button>
+          <button class="f" data-type="theme" data-val="Game situation" aria-pressed="false">Game situation</button>
         </div>
-        <div class="cal" id="cal"></div>
-      </div>
-
-      <!-- right: the session for the selected day -->
-      <div class="pane">
-        <div class="sesshead">
-          <div class="sessdate" id="sessDate">Select a day</div>
-          <div class="sesstime">
-            <span id="autoTime">0</span> min planned &middot;
-            override <input id="timeOverride" type="number" min="0" placeholder="&mdash;" aria-label="Override total minutes">
-          </div>
-        </div>
-
-        <ul class="chosen" id="chosen"></ul>
-        <div class="noplan" id="noplan">No drills yet. Add some from the list below.</div>
-
-        <h3 style="margin-top:20px">Session notes</h3>
-        <textarea class="notes" id="notes" placeholder="Focus for the session, equipment, anything to remember&hellip;"></textarea>
-
-        <!-- add drills -->
-        <div class="picker">
-          <h3>Add drills</h3>
-          <div class="row" style="margin-bottom:10px">
-            <span class="tag">Theme</span>
-            <button class="f" data-ptype="theme" data-val="all" aria-pressed="true">All</button>
-            <button class="f" data-ptype="theme" data-val="Tackle &amp; contact" aria-pressed="false">Tackle</button>
-            <button class="f" data-ptype="theme" data-val="Attack skills" aria-pressed="false">Attack</button>
-            <button class="f" data-ptype="theme" data-val="Defence skills" aria-pressed="false">Defence</button>
-            <button class="f" data-ptype="theme" data-val="Team organisation" aria-pressed="false">Team</button>
-            <button class="f" data-ptype="theme" data-val="Game situation" aria-pressed="false">Game</button>
-          </div>
-          <div class="row" style="margin-bottom:12px">
-            <span class="tag">Level</span>
-            <button class="f" data-ptype="diff" data-val="all" aria-pressed="true">All</button>
-            <button class="f" data-ptype="diff" data-val="1" aria-pressed="false">Beg</button>
-            <button class="f" data-ptype="diff" data-val="2" aria-pressed="false">Int</button>
-            <button class="f" data-ptype="diff" data-val="3" aria-pressed="false">Adv</button>
-          </div>
-          <div id="pickList"></div>
+        <div class="row">
+          <span class="tag">Level</span>
+          <button class="f" data-type="diff" data-val="all" aria-pressed="true">All</button>
+          <button class="f" data-type="diff" data-val="1" aria-pressed="false">Beginner</button>
+          <button class="f" data-type="diff" data-val="2" aria-pressed="false">Intermediate</button>
+          <button class="f" data-type="diff" data-val="3" aria-pressed="false">Advanced</button>
+          <span class="count" id="count">10 drills</span>
         </div>
       </div>
-
     </div>
-    </div><!-- /plannerBody -->
-  </main>
-</section>
+    <main class="wrap">
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty" style="display:none">No drills match those filters. Widen the theme or level.</div>
+      <footer>Adjust numbers and space to suit your squad. Contact work always follows a full warm-up.</footer>
+    </main>
+  </section>
+
+  <!-- ============ PANEL 2: PLAN A SESSION ============ -->
+  <section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" hidden>
+    <main class="wrap">
+      <div class="planner">
+        <!-- left: calendar -->
+        <div class="pane">
+          <h3>Pick a day</h3>
+          <div class="calbar">
+            <button id="calPrev" aria-label="Previous month">&#8249;</button>
+            <span id="calLabel">Month</span>
+            <button id="calNext" aria-label="Next month">&#8250;</button>
+          </div>
+          <div class="cal" id="cal"></div>
+        </div>
+        <!-- right: the session for the selected day -->
+        <div class="pane">
+          <div class="sesshead">
+            <div class="sessdate" id="sessDate">Select a day</div>
+            <div class="sesstime">
+              <span id="autoTime">0</span> min planned &middot;
+              override <input id="timeOverride" type="number" min="0" placeholder="&mdash;" aria-label="Override total minutes">
+            </div>
+          </div>
+          <ul class="chosen" id="chosen"></ul>
+          <div class="noplan" id="noplan">No drills yet. Add some from the list below.</div>
+          <h3 style="margin-top:20px">Session notes</h3>
+          <textarea class="notes" id="notes" placeholder="Focus for the session, equipment, anything to remember&hellip;"></textarea>
+          <div class="picker">
+            <h3>Add drills</h3>
+            <div class="row" style="margin-bottom:10px">
+              <span class="tag">Theme</span>
+              <button class="f" data-ptype="theme" data-val="all" aria-pressed="true">All</button>
+              <button class="f" data-ptype="theme" data-val="Tackle &amp; contact" aria-pressed="false">Tackle</button>
+              <button class="f" data-ptype="theme" data-val="Attack skills" aria-pressed="false">Attack</button>
+              <button class="f" data-ptype="theme" data-val="Defence skills" aria-pressed="false">Defence</button>
+              <button class="f" data-ptype="theme" data-val="Team organisation" aria-pressed="false">Team</button>
+              <button class="f" data-ptype="theme" data-val="Game situation" aria-pressed="false">Game</button>
+            </div>
+            <div class="row" style="margin-bottom:12px">
+              <span class="tag">Level</span>
+              <button class="f" data-ptype="diff" data-val="all" aria-pressed="true">All</button>
+              <button class="f" data-ptype="diff" data-val="1" aria-pressed="false">Beg</button>
+              <button class="f" data-ptype="diff" data-val="2" aria-pressed="false">Int</button>
+              <button class="f" data-ptype="diff" data-val="3" aria-pressed="false">Adv</button>
+            </div>
+            <div id="pickList"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <!-- ============ PANEL 3: MANAGE DRILLS ============ -->
+  <section class="panel" id="panel-manage" role="tabpanel" aria-labelledby="tab-manage" hidden>
+    <main class="wrap">
+      <div class="managehead">
+        <div>
+          <h3 class="mtitle">All drills</h3>
+          <p class="mnote">Add, edit, or archive drills. Changes are shared with every coach right away.</p>
+        </div>
+        <button class="signin" id="addDrillBtn">+ Add a drill</button>
+      </div>
+
+      <!-- the add / edit form (hidden until you add or edit) -->
+      <div class="drillform" id="drillForm" hidden>
+        <h3 class="formtitle" id="formTitle">Add a drill</h3>
+        <div class="ff">
+          <label>Title
+            <input id="f_title" type="text" placeholder="e.g. Four-Cone Draw and Pass">
+          </label>
+        </div>
+        <div class="ffrow">
+          <label>Theme
+            <select id="f_theme"></select>
+          </label>
+          <label>Level
+            <select id="f_diff">
+              <option value="1">Beginner</option>
+              <option value="2">Intermediate</option>
+              <option value="3">Advanced</option>
+            </select>
+          </label>
+        </div>
+        <div class="ffrow">
+          <label>Players <input id="f_players" type="text" placeholder="e.g. Groups of 4"></label>
+          <label>Time <input id="f_time" type="text" placeholder="e.g. 10 min"></label>
+          <label>Space <input id="f_space" type="text" placeholder="e.g. 15m × 15m"></label>
+        </div>
+        <div class="ff"><label>How it runs
+          <textarea id="f_how" placeholder="Describe how the drill runs, step by step."></textarea></label></div>
+        <div class="ff"><label>Objective
+          <textarea id="f_obj" placeholder="What is the drill trying to teach?"></textarea></label></div>
+        <div class="ff"><label>Coaching points
+          <textarea id="f_look" placeholder="What should a coach watch for?"></textarea></label></div>
+        <div class="formactions">
+          <button class="ghost" id="cancelForm">Cancel</button>
+          <button class="signin" id="saveForm">Save drill</button>
+        </div>
+      </div>
+
+      <div class="mlist" id="manageList"></div>
+
+      <h3 class="mtitle" style="margin-top:34px">Archived</h3>
+      <p class="mnote">Hidden from Browse and the planner. Restore any time.</p>
+      <div class="mlist" id="archivedList"></div>
+    </main>
+  </section>
+
+</div><!-- /plannerBody -->
 
 <script type="module" src="js/app.js"></script>
 </body>

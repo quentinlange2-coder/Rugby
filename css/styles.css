@@ -242,3 +242,65 @@ textarea.notes:focus{outline:1px solid var(--jersey);border-color:var(--jersey)}
 }
 .signin:hover{filter:brightness(1.08)}
 .signin:focus-visible{outline:2px solid var(--chalk);outline-offset:3px}
+
+/* ============================================================
+   MANAGE DRILLS VIEW
+   ============================================================ */
+.managehead{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  margin-top:30px;flex-wrap:wrap;
+}
+.mtitle{
+  font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.02em;color:var(--chalk);font-weight:400;
+}
+.mnote{font-size:14px;color:var(--mud);margin-top:2px;max-width:52ch}
+
+.mlist{margin-top:16px;display:flex;flex-direction:column;gap:2px}
+.mrow{
+  display:flex;gap:14px;align-items:center;background:var(--pitch);
+  padding:12px 16px;border-left:2px solid var(--line);
+}
+.mrow.archived{opacity:.6}
+.mrow .mnum{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--jersey)}
+.mrow .mname{flex:1;font-size:16px}
+.mrow .mtheme{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--mud)}
+.mrow .mlevel{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mud);min-width:82px}
+.mbtn{
+  background:transparent;border:1px solid var(--line);color:var(--chalk);
+  border-radius:6px;padding:5px 12px;font-family:'Roboto Condensed',sans-serif;
+  font-size:12px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:.14s;
+}
+.mbtn:hover{border-color:var(--chalk)}
+.mbtn.arch:hover,.mbtn.restore:hover{border-color:var(--jersey);color:var(--jersey)}
+
+/* add / edit form */
+.drillform{
+  background:var(--pitch);border:1px solid var(--line);border-radius:10px;
+  padding:22px 24px;margin-top:18px;
+}
+.formtitle{
+  font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.02em;color:var(--jersey);
+  font-weight:400;margin-bottom:16px;
+}
+.drillform label{
+  display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--mud);
+  font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;text-transform:uppercase;
+}
+.drillform .ff{margin-bottom:14px}
+.drillform .ffrow{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.drillform .ffrow label{flex:1;min-width:140px}
+.drillform input,.drillform select,.drillform textarea{
+  background:rgba(242,239,230,.04);border:1px solid var(--line);color:var(--chalk);
+  border-radius:6px;padding:9px 11px;font-family:'Roboto Condensed',sans-serif;
+  font-size:15px;text-transform:none;letter-spacing:0;
+}
+.drillform input:focus,.drillform select:focus,.drillform textarea:focus{
+  outline:1px solid var(--jersey);border-color:var(--jersey);
+}
+.drillform textarea{min-height:66px;resize:vertical}
+.formactions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+
+@media(max-width:640px){
+  .mrow{flex-wrap:wrap;gap:8px}
+  .mrow .mname{flex-basis:100%;order:-1}
+}
