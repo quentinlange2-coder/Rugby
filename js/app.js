@@ -25,7 +25,7 @@ const db = getFirestore(fbApp);
 const provider = new GoogleAuthProvider();
 
 const levels = {1:'Beginner',2:'Intermediate',3:'Advanced'};
-const THEMES = ["Tackle & contact","Attack skills","Defence skills","Team organisation","Game situation"];
+const THEMES = ["Tackle & contact","Attack skills","Defence skills","Team organisation","Game situation","Cardio"];
 
 /* ---- one-time seed data (see note above) ---- */
 const SEED_DRILLS = [

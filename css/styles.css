@@ -232,6 +232,7 @@ textarea.notes:focus{outline:1px solid var(--jersey);border-color:var(--jersey)}
   display:flex;justify-content:center;padding:60px 20px;
   background:var(--pitch);margin-top:2px;
 }
+.gate[hidden]{display:none}
 .gatecard{max-width:420px;text-align:center}
 .gatecard .eyebrow{margin-bottom:14px}
 .gatemsg{color:rgba(242,239,230,.78);font-size:16px;margin-bottom:24px;line-height:1.5}
