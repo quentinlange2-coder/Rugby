@@ -131,6 +131,93 @@ const drillStore = {
 };
 
 /* ============================================================
+   DRILL PHOTOS (Firebase Storage)
+   Only .jpg/.jpeg and .png accepted. No separate storage service —
+   photos are shrunk in the browser and saved as part of the
+   drill's own data, so there's nothing extra to set up or pay
+   for. The trade-off: each photo is capped fairly small (long
+   side ~800px) to stay well under Firestore's 1MB document limit.
+   ============================================================ */
+const ALLOWED_TYPES = ['image/jpeg','image/png'];
+const MAX_UPLOAD_BYTES = 8*1024*1024;      // sanity cap on the original file
+const MAX_STORED_CHARS = 700*1024;         // cap on the compressed result
+
+function compressImageToDataUrl(file, maxDim=800, quality=0.72){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const objUrl=URL.createObjectURL(file);
+    img.onload=()=>{
+      let w=img.width, h=img.height;
+      if(w>h && w>maxDim){ h=Math.round(h*maxDim/w); w=maxDim; }
+      else if(h>=w && h>maxDim){ w=Math.round(w*maxDim/h); h=maxDim; }
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(objUrl);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(objUrl); reject(new Error('unreadable image')); };
+    img.src=objUrl;
+  });
+}
+
+async function uploadDrillPhoto(n, file){
+  if(!ALLOWED_TYPES.includes(file.type)){ alert('Please choose a JPEG or PNG image.'); return false; }
+  if(file.size > MAX_UPLOAD_BYTES){ alert('That photo is too large — please use one under 8MB.'); return false; }
+  try{
+    const dataUrl = await compressImageToDataUrl(file);
+    if(dataUrl.length > MAX_STORED_CHARS){
+      alert('That photo is still too large after shrinking it — please try a simpler photo or a screenshot instead.');
+      return false;
+    }
+    const d = drillByNum(n);
+    await drillStore.save({...d, photoUrl:dataUrl});
+    await drillStore.loadAll();
+    return true;
+  }catch(e){ console.error('photo processing failed', e); alert('Could not read that photo — please try a different file.'); return false; }
+}
+async function removeDrillPhoto(n){
+  try{
+    const d = drillByNum(n);
+    await drillStore.save({...d, photoUrl:null});
+    await drillStore.loadAll();
+    return true;
+  }catch(e){ console.error('photo remove failed', e); alert('Could not remove the photo — check your connection.'); return false; }
+}
+
+/* the little square: shows the photo + remove button, or an upload control */
+function photoBoxHTML(d){
+  if(d.photoUrl){
+    return `<div class="photo-box">
+      <img src="${d.photoUrl}" alt="Photo for ${esc(d.title)}">
+      <button class="photo-erase" data-erase-photo="${d.n}">Remove photo</button>
+    </div>`;
+  }
+  return `<div class="photo-box">
+    <label class="photo-upload">
+      <input type="file" accept="image/jpeg,image/png" data-upload-photo="${d.n}" hidden>
+      + Add photo
+    </label>
+  </div>`;
+}
+/* wire the upload input + erase button inside a freshly-rendered container */
+function wirePhotoBox(container, n, afterChange){
+  const input = container.querySelector(`[data-upload-photo="${n}"]`);
+  if(input) input.addEventListener('change', async ()=>{
+    const file = input.files[0]; if(!file) return;
+    const label = input.closest('.photo-upload'); if(label) label.textContent='Saving photo…';
+    const ok = await uploadDrillPhoto(n, file);
+    if(afterChange) afterChange();
+  });
+  const eraseBtn = container.querySelector(`[data-erase-photo="${n}"]`);
+  if(eraseBtn) eraseBtn.addEventListener('click', async ()=>{
+    eraseBtn.textContent='Removing…';
+    await removeDrillPhoto(n);
+    if(afterChange) afterChange();
+  });
+}
+
+/* ============================================================
    SESSIONS IN FIRESTORE (unchanged from before)
    ============================================================ */
 const COL = 'sessions';
@@ -176,7 +263,7 @@ function renderBrowse(){
     (browseState.diff==='all'||String(d.d)===browseState.diff)
   );
   grid.innerHTML = list.map(d=>`
-<article>
+<article data-n="${d.n}">
   <div class="head" role="button" tabindex="0" aria-expanded="false">
     <span class="num">${String(d.n).padStart(2,'0')}</span>
     <h2>${esc(d.title)}</h2>
@@ -187,10 +274,15 @@ function renderBrowse(){
     <span class="chev">&#9662;</span>
   </div>
   <div class="body">
-    <h3>How it runs</h3><p>${esc(d.how)}</p>
-    <h3>Objective</h3><p>${esc(d.obj)}</p>
-    <h3>Coaching points</h3><p>${esc(d.look)}</p>
-    <div class="meta"><span>${levels[d.d]}</span><span>${esc(d.players)}</span><span>${esc(d.time)}</span><span>${esc(d.space)}</span></div>
+    <div class="bodyflex">
+      <div class="bodytext">
+        <h3>How it runs</h3><p>${esc(d.how)}</p>
+        <h3>Objective</h3><p>${esc(d.obj)}</p>
+        <h3>Coaching points</h3><p>${esc(d.look)}</p>
+        <div class="meta"><span>${levels[d.d]}</span><span>${esc(d.players)}</span><span>${esc(d.time)}</span><span>${esc(d.space)}</span></div>
+      </div>
+      ${photoBoxHTML(d)}
+    </div>
   </div>
 </article>`).join('');
 
@@ -198,6 +290,11 @@ function renderBrowse(){
     const toggle=()=>{const a=h.parentElement;const o=a.classList.toggle('open');h.setAttribute('aria-expanded',o);};
     h.addEventListener('click',toggle);
     h.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
+  });
+  list.forEach(d=>{
+    const art=grid.querySelector(`article[data-n="${d.n}"]`);
+    const box=art.querySelector('.photo-box');
+    wirePhotoBox(box, d.n, ()=>refreshBrowsePhoto(d.n));
   });
   const n=list.length;
   countEl.textContent=n+(n===1?' drill':' drills');
@@ -215,6 +312,15 @@ document.querySelectorAll('button.f[data-type]').forEach(b=>{
 
 /* small helper: escape user text so titles/notes can't break the page */
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* refresh just one card's photo box in place (keeps other cards open/closed as they were) */
+function refreshBrowsePhoto(n){
+  const art=grid.querySelector(`article[data-n="${n}"]`); if(!art) return;
+  const box=art.querySelector('.photo-box'); if(!box) return;
+  box.outerHTML=photoBoxHTML(drillByNum(n));
+  const newBox=art.querySelector('.photo-box');
+  wirePhotoBox(newBox, n, ()=>refreshBrowsePhoto(n));
+}
 
 /* ============================================================
    VIEW SWITCHER  (now three views)
@@ -324,17 +430,11 @@ async function renderSession(){
   autoTimeEl.textContent=auto;
   overrideEl.value=s.override==null?'':s.override;
   notesEl.value=s.notes||'';
-  notesEl.style.height='auto';
-  notesEl.style.height=notesEl.scrollHeight+'px';
   await renderPicker();
 }
 
 let notesTimer=null, overrideTimer=null;
-notesEl.addEventListener('input',()=>{
-  notesEl.style.height='auto';
-  notesEl.style.height=notesEl.scrollHeight+'px';
-  if(!selectedDate)return; clearTimeout(notesTimer); notesTimer=setTimeout(async ()=>{ const s=await store.load(selectedDate); s.notes=notesEl.value; await store.save(selectedDate,s); await renderCalendar(); },600);
-});
+notesEl.addEventListener('input',()=>{ if(!selectedDate)return; clearTimeout(notesTimer); notesTimer=setTimeout(async ()=>{ const s=await store.load(selectedDate); s.notes=notesEl.value; await store.save(selectedDate,s); await renderCalendar(); },600); });
 overrideEl.addEventListener('input',()=>{ if(!selectedDate)return; clearTimeout(overrideTimer); overrideTimer=setTimeout(async ()=>{ const s=await store.load(selectedDate); s.override=overrideEl.value===''?null:parseInt(overrideEl.value,10); await store.save(selectedDate,s); await renderCalendar(); },600); });
 
 async function renderPicker(){
@@ -411,8 +511,25 @@ function openForm(drill){
   F.how.value     = drill?.how || '';
   F.obj.value     = drill?.obj || '';
   F.look.value    = drill?.look || '';
+
+  const photoSection=document.getElementById('photoSection');
+  const photoNote=document.getElementById('photoNote');
+  if(drill){
+    photoNote.hidden=true;
+    photoSection.hidden=false;
+    refreshFormPhoto(drill.n);
+  } else {
+    photoSection.hidden=true;
+    photoNote.hidden=false;
+  }
+
   mForm.hidden = false;
   mForm.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function refreshFormPhoto(n){
+  const photoSection=document.getElementById('photoSection');
+  photoSection.innerHTML=photoBoxHTML(drillByNum(n));
+  wirePhotoBox(photoSection, n, ()=>refreshFormPhoto(n));
 }
 function closeForm(){ mForm.hidden = true; editingNum = null; }
 
@@ -422,6 +539,7 @@ document.getElementById('cancelForm').addEventListener('click',closeForm);
 document.getElementById('saveForm').addEventListener('click',async ()=>{
   const title=F.title.value.trim();
   if(!title){ alert('Please give the drill a title.'); return; }
+  const existing = editingNum!=null ? drillByNum(editingNum) : null;
   const drill={
     n:      editingNum!=null ? editingNum : drillStore.nextNum(),
     t:      F.theme.value,
@@ -433,7 +551,8 @@ document.getElementById('saveForm').addEventListener('click',async ()=>{
     how:    F.how.value.trim(),
     obj:    F.obj.value.trim(),
     look:   F.look.value.trim(),
-    archived:false
+    archived:false,
+    photoUrl: existing?.photoUrl || null
   };
   try{
     await drillStore.save(drill);
