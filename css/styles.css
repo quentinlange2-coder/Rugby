@@ -191,7 +191,7 @@ footer{margin-top:48px;font-family:'IBM Plex Mono',monospace;font-size:11px;colo
 textarea.notes{
   width:100%;min-height:70px;background:rgba(242,239,230,.03);
   border:1px solid var(--line);color:var(--chalk);border-radius:6px;
-  font-family:'Roboto Condensed',sans-serif;font-size:15px;padding:10px 12px;resize:vertical;margin-top:6px;
+  font-family:'Roboto Condensed',sans-serif;font-size:15px;padding:10px 12px;resize:none;overflow:hidden;margin-top:6px;
 }
 textarea.notes:focus{outline:1px solid var(--jersey);border-color:var(--jersey)}
 
