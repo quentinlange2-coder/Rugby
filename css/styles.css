@@ -88,7 +88,7 @@ article.open .body{display:block}
   font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;
   text-transform:uppercase;color:var(--jersey);margin:16px 0 6px;font-weight:600;
 }
-.body p{font-size:16px;color:rgba(242,239,230,.86)}
+.body p{font-size:16px;color:rgba(242,239,230,.86);white-space:pre-line}
 .meta{
   margin-top:20px;padding-top:14px;border-top:1px solid var(--line);
   font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mud);
