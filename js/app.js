@@ -324,11 +324,17 @@ async function renderSession(){
   autoTimeEl.textContent=auto;
   overrideEl.value=s.override==null?'':s.override;
   notesEl.value=s.notes||'';
+  notesEl.style.height='auto';
+  notesEl.style.height=notesEl.scrollHeight+'px';
   await renderPicker();
 }
 
 let notesTimer=null, overrideTimer=null;
-notesEl.addEventListener('input',()=>{ if(!selectedDate)return; clearTimeout(notesTimer); notesTimer=setTimeout(async ()=>{ const s=await store.load(selectedDate); s.notes=notesEl.value; await store.save(selectedDate,s); await renderCalendar(); },600); });
+notesEl.addEventListener('input',()=>{
+  notesEl.style.height='auto';
+  notesEl.style.height=notesEl.scrollHeight+'px';
+  if(!selectedDate)return; clearTimeout(notesTimer); notesTimer=setTimeout(async ()=>{ const s=await store.load(selectedDate); s.notes=notesEl.value; await store.save(selectedDate,s); await renderCalendar(); },600);
+});
 overrideEl.addEventListener('input',()=>{ if(!selectedDate)return; clearTimeout(overrideTimer); overrideTimer=setTimeout(async ()=>{ const s=await store.load(selectedDate); s.override=overrideEl.value===''?null:parseInt(overrideEl.value,10); await store.save(selectedDate,s); await renderCalendar(); },600); });
 
 async function renderPicker(){
