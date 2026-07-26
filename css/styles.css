@@ -82,7 +82,7 @@ h2{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.02em;flex:
 .pip.on{background:var(--jersey);border-color:var(--jersey)}
 .chev{color:var(--mud);font-size:18px;transition:.2s}
 article.open .chev{transform:rotate(180deg)}
-.body{display:none;padding:0 26px 28px 26px;max-width:74ch}
+.body{display:none;padding:0 26px 28px 26px;max-width:820px}
 article.open .body{display:block}
 .body h3{
   font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;
