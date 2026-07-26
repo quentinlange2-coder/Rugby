@@ -146,32 +146,73 @@ function apply(){
 
 
 /* ============================================================
-   PLANNER
-   A session = { drills:[numbers], notes:"", override:null }
-   stored per calendar day, keyed "YYYY-MM-DD".
+   FIREBASE: sign-in + shared storage
+   ------------------------------------------------------------
+   Replaces the old per-device localStorage. Sessions now live
+   in one shared Firestore database, and only approved coaches
+   (see firebase-config.js) can sign in to read or write them.
 
-   >>> STAGE 2 NOTE <<<
-   Right now sessions are saved in this browser only, via the
-   store object below. When we add the shared database, ONLY the
-   four functions inside `store` change (load/save/all). Nothing
-   else in this file needs to move. That's the whole point of
-   keeping them in one place.
+   Because the database lives in Tokyo, saving/loading now takes
+   a short trip over the internet — so store.load / store.save
+   are "async" (they return a promise you `await`). That's the
+   only real change to how the planner talks to storage.
    ============================================================ */
 
+import { firebaseConfig } from './firebase-config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs }
+  from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+const provider = new GoogleAuthProvider();
+
+/* who is signed in right now (null = nobody).
+   We no longer keep the coach list in this public file. Instead,
+   Firebase's security rules are the real gate: we simply TRY to
+   read the database, and if Firebase allows it, the user is an
+   approved coach. If Firebase refuses (permission-denied), they
+   aren't. This keeps every coach email out of the public repo. */
+let currentUser = null;
+async function checkIsCoach(){
+  try{
+    // a harmless read; rules allow it only for approved coaches
+    await getDocs(collection(db, COL));
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+/* --- the shared store. Same shape as before, but async. --- */
+const COL = 'sessions';   // the Firestore collection holding one doc per day
 const store = {
-  KEY:'rugby_sessions_v1',
-  _all(){ try{ return JSON.parse(localStorage.getItem(this.KEY))||{}; }catch(e){ return {}; } },
-  load(date){ return this._all()[date] || {drills:[],notes:'',override:null}; },
-  save(date, session){
-    const all=this._all();
-    const empty = session.drills.length===0 && !session.notes && session.override==null;
-    if(empty) delete all[date]; else all[date]=session;
-    localStorage.setItem(this.KEY, JSON.stringify(all));
+  async load(date){
+    try{
+      const snap = await getDoc(doc(db, COL, date));
+      return snap.exists() ? snap.data() : {drills:[],notes:'',override:null};
+    }catch(e){ console.error('load failed', e); return {drills:[],notes:'',override:null}; }
   },
-  datesWithPlans(){ return Object.keys(this._all()); }
+  async save(date, session){
+    const empty = session.drills.length===0 && !session.notes && session.override==null;
+    try{
+      if(empty) await deleteDoc(doc(db, COL, date));
+      else      await setDoc(doc(db, COL, date), session);
+    }catch(e){ console.error('save failed', e); alert('Could not save — check your connection.'); }
+  },
+  async datesWithPlans(){
+    try{
+      const snap = await getDocs(collection(db, COL));
+      return snap.docs.map(d=>d.id);
+    }catch(e){ console.error('list failed', e); return []; }
+  }
 };
 
-/* --- read the minutes number out of a drill's time text ("12 min" -> 12) --- */
+
+/* --- helpers --- */
 function drillMinutes(d){ const m=String(d.time).match(/\d+/); return m?parseInt(m[0],10):0; }
 function drillByNum(n){ return drills.find(d=>d.n===n); }
 
@@ -193,18 +234,18 @@ tabs.plan.addEventListener('click',()=>showView('plan'));
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const today=new Date();
 let calYear=today.getFullYear(), calMonth=today.getMonth();
-let selectedDate=null; // "YYYY-MM-DD"
+let selectedDate=null;
 
 function ymd(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
 
 const calEl=document.getElementById('cal');
 const calLabel=document.getElementById('calLabel');
 
-function renderCalendar(){
+async function renderCalendar(){
   calLabel.textContent=`${MONTHS[calMonth]} ${calYear}`;
-  const firstDow=(new Date(calYear,calMonth,1).getDay()+6)%7; // Monday-first
+  const firstDow=(new Date(calYear,calMonth,1).getDay()+6)%7;
   const daysIn=new Date(calYear,calMonth+1,0).getDate();
-  const planned=new Set(store.datesWithPlans());
+  const planned=new Set(await store.datesWithPlans());
   const todayStr=ymd(today.getFullYear(),today.getMonth(),today.getDate());
 
   let html=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div class="dow">${d}</div>`).join('');
@@ -219,12 +260,12 @@ function renderCalendar(){
   }
   calEl.innerHTML=html;
   calEl.querySelectorAll('.day[data-date]').forEach(b=>{
-    b.addEventListener('click',()=>{ selectedDate=b.dataset.date; renderCalendar(); renderSession(); });
+    b.addEventListener('click',async ()=>{ selectedDate=b.dataset.date; await renderCalendar(); await renderSession(); });
   });
 }
 
-document.getElementById('calPrev').addEventListener('click',()=>{ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); });
-document.getElementById('calNext').addEventListener('click',()=>{ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); });
+document.getElementById('calPrev').addEventListener('click',async ()=>{ calMonth--; if(calMonth<0){calMonth=11;calYear--;} await renderCalendar(); });
+document.getElementById('calNext').addEventListener('click',async ()=>{ calMonth++; if(calMonth>11){calMonth=0;calYear++;} await renderCalendar(); });
 
 /* --- session pane --- */
 const sessDate=document.getElementById('sessDate');
@@ -243,7 +284,7 @@ function prettyDate(key){
   return `${dow} ${d} ${MONTHS[m-1]}`;
 }
 
-function renderSession(){
+async function renderSession(){
   if(!selectedDate){
     sessDate.textContent='Select a day';
     chosenEl.innerHTML=''; noplanEl.style.display='block';
@@ -251,11 +292,10 @@ function renderSession(){
     pickListEl.innerHTML='<div class="noplan">Pick a day first.</div>';
     return;
   }
-  const s=store.load(selectedDate);
+  const s=await store.load(selectedDate);
   sessDate.textContent=prettyDate(selectedDate);
 
-  // chosen drills
-  chosenEl.innerHTML=s.drills.map(n=>{
+  chosenEl.innerHTML=(s.drills||[]).map(n=>{
     const d=drillByNum(n); if(!d) return '';
     return `<li>
       <span class="cnum">${String(d.n).padStart(2,'0')}</span>
@@ -264,28 +304,27 @@ function renderSession(){
       <button class="rm" data-rm="${n}" aria-label="Remove ${d.title}">&times;</button>
     </li>`;
   }).join('');
-  noplanEl.style.display = s.drills.length ? 'none':'block';
+  noplanEl.style.display = (s.drills||[]).length ? 'none':'block';
   chosenEl.querySelectorAll('.rm').forEach(b=>{
-    b.addEventListener('click',()=>{ const s2=store.load(selectedDate); s2.drills=s2.drills.filter(x=>x!==+b.dataset.rm); store.save(selectedDate,s2); renderSession(); renderCalendar(); });
+    b.addEventListener('click',async ()=>{ const s2=await store.load(selectedDate); s2.drills=(s2.drills||[]).filter(x=>x!==+b.dataset.rm); await store.save(selectedDate,s2); await renderSession(); await renderCalendar(); });
   });
 
-  // time
-  const auto=s.drills.reduce((sum,n)=>{ const d=drillByNum(n); return sum+(d?drillMinutes(d):0); },0);
+  const auto=(s.drills||[]).reduce((sum,n)=>{ const d=drillByNum(n); return sum+(d?drillMinutes(d):0); },0);
   autoTimeEl.textContent=auto;
   overrideEl.value = s.override==null ? '' : s.override;
-
-  // notes
   notesEl.value=s.notes||'';
 
-  renderPicker();
+  await renderPicker();
 }
 
-notesEl.addEventListener('input',()=>{ if(!selectedDate)return; const s=store.load(selectedDate); s.notes=notesEl.value; store.save(selectedDate,s); renderCalendar(); });
-overrideEl.addEventListener('input',()=>{ if(!selectedDate)return; const s=store.load(selectedDate); s.override = overrideEl.value===''?null:parseInt(overrideEl.value,10); store.save(selectedDate,s); renderCalendar(); });
+/* debounce notes/override so we don't hit the DB on every keystroke */
+let notesTimer=null, overrideTimer=null;
+notesEl.addEventListener('input',()=>{ if(!selectedDate)return; clearTimeout(notesTimer); notesTimer=setTimeout(async ()=>{ const s=await store.load(selectedDate); s.notes=notesEl.value; await store.save(selectedDate,s); await renderCalendar(); },600); });
+overrideEl.addEventListener('input',()=>{ if(!selectedDate)return; clearTimeout(overrideTimer); overrideTimer=setTimeout(async ()=>{ const s=await store.load(selectedDate); s.override = overrideEl.value===''?null:parseInt(overrideEl.value,10); await store.save(selectedDate,s); await renderCalendar(); },600); });
 
-function renderPicker(){
-  const s=store.load(selectedDate);
-  const inSet=new Set(s.drills);
+async function renderPicker(){
+  const s=await store.load(selectedDate);
+  const inSet=new Set(s.drills||[]);
   const list=drills.filter(d=>
     (pickState.theme==='all'||d.t===pickState.theme) &&
     (pickState.diff==='all'||String(d.d)===pickState.diff)
@@ -298,22 +337,63 @@ function renderPicker(){
       <span class="plus">${inSet.has(d.n)?'&#10003;':'+'}</span>
     </div>`).join('') : '<div class="noplan">No drills match those filters.</div>';
   pickListEl.querySelectorAll('[data-add]').forEach(row=>{
-    row.addEventListener('click',()=>{
+    row.addEventListener('click',async ()=>{
       const n=+row.dataset.add;
-      const s2=store.load(selectedDate);
+      const s2=await store.load(selectedDate);
+      s2.drills=s2.drills||[];
       if(s2.drills.includes(n)) s2.drills=s2.drills.filter(x=>x!==n);
       else s2.drills=[...s2.drills,n];
-      store.save(selectedDate,s2);
-      renderSession(); renderCalendar();
+      await store.save(selectedDate,s2);
+      await renderSession(); await renderCalendar();
     });
   });
 }
 
 document.querySelectorAll('button.f[data-ptype]').forEach(b=>{
-  b.addEventListener('click',()=>{
+  b.addEventListener('click',async ()=>{
     const t=b.dataset.ptype;
     pickState[t]=b.dataset.val;
     document.querySelectorAll(`button.f[data-ptype="${t}"]`).forEach(x=>x.setAttribute('aria-pressed',x===b));
-    if(selectedDate) renderPicker();
+    if(selectedDate) await renderPicker();
   });
+});
+
+
+/* ============================================================
+   AUTH UI: sign-in gate for the planner
+   ============================================================ */
+const gate=document.getElementById('authGate');
+const gateMsg=document.getElementById('authMsg');
+const signInBtn=document.getElementById('signInBtn');
+const signOutBtn=document.getElementById('signOutBtn');
+const whoami=document.getElementById('whoami');
+const plannerBody=document.getElementById('plannerBody');
+
+signInBtn.addEventListener('click',async ()=>{
+  try{ await signInWithPopup(auth, provider); }
+  catch(e){ console.error(e); gateMsg.textContent='Sign-in was cancelled or failed. Try again.'; }
+});
+signOutBtn.addEventListener('click',()=>signOut(auth));
+
+onAuthStateChanged(auth, async (user)=>{
+  currentUser=user;
+  if(user && await checkIsCoach()){
+    // approved coach (Firebase rules allowed the read): show planner
+    gate.hidden=true; plannerBody.hidden=false;
+    whoami.textContent=user.email;
+    signOutBtn.hidden=false;
+    await renderCalendar(); await renderSession();
+  } else if(user){
+    // signed in but not on the coach list
+    gate.hidden=false; plannerBody.hidden=true;
+    signOutBtn.hidden=false; whoami.textContent=user.email;
+    gateMsg.textContent=`Signed in as ${user.email}, but this account isn't on the coach list. Ask an admin to add you.`;
+    signInBtn.hidden=true;
+  } else {
+    // signed out
+    gate.hidden=false; plannerBody.hidden=true;
+    signOutBtn.hidden=true; whoami.textContent='';
+    gateMsg.textContent='Sign in with your coach Google account to view and plan sessions.';
+    signInBtn.hidden=false;
+  }
 });

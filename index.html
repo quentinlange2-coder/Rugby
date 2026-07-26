@@ -59,6 +59,24 @@
 <!-- ============ PANEL 2: PLAN A SESSION ============ -->
 <section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" hidden>
   <main class="wrap">
+
+    <!-- session bar: who's signed in -->
+    <div class="authbar">
+      <span class="who" id="whoami"></span>
+      <button class="ghost" id="signOutBtn" hidden>Sign out</button>
+    </div>
+
+    <!-- sign-in gate: shown until an approved coach signs in -->
+    <div class="gate" id="authGate">
+      <div class="gatecard">
+        <div class="eyebrow">Coaches only</div>
+        <p class="gatemsg" id="authMsg">Sign in with your coach Google account to view and plan sessions.</p>
+        <button class="signin" id="signInBtn">Sign in with Google</button>
+      </div>
+    </div>
+
+    <!-- the actual planner, hidden until signed in -->
+    <div id="plannerBody" hidden>
     <div class="planner">
 
       <!-- left: calendar -->
@@ -112,9 +130,10 @@
       </div>
 
     </div>
+    </div><!-- /plannerBody -->
   </main>
 </section>
 
-<script src="js/app.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
