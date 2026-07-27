@@ -276,9 +276,9 @@ function renderBrowse(){
   <div class="body">
     <div class="bodyflex">
       <div class="bodytext">
-        <h3>How it runs</h3><p>${esc(d.how)}</p>
-        <h3>Objective</h3><p>${esc(d.obj)}</p>
-        <h3>Coaching points</h3><p>${esc(d.look)}</p>
+        <h3>How it runs</h3><p>${escNL(d.how)}</p>
+        <h3>Objective</h3><p>${escNL(d.obj)}</p>
+        <h3>Coaching points</h3><p>${escNL(d.look)}</p>
         <div class="meta"><span>${levels[d.d]}</span><span>${esc(d.players)}</span><span>${esc(d.time)}</span><span>${esc(d.space)}</span></div>
       </div>
       ${photoBoxHTML(d)}
@@ -312,6 +312,7 @@ document.querySelectorAll('button.f[data-type]').forEach(b=>{
 
 /* small helper: escape user text so titles/notes can't break the page */
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escNl(s){ return esc(s).replace(/\r\n|\r|\n|\u2028|\u2029/g, '<br>'); }
 
 /* refresh just one card's photo box in place (keeps other cards open/closed as they were) */
 function refreshBrowsePhoto(n){
