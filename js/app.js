@@ -276,9 +276,9 @@ function renderBrowse(){
   <div class="body">
     <div class="bodyflex">
       <div class="bodytext">
-        <h3>How it runs</h3><p>${escNL(d.how)}</p>
-        <h3>Objective</h3><p>${escNL(d.obj)}</p>
-        <h3>Coaching points</h3><p>${escNL(d.look)}</p>
+        <h3>How it runs</h3><p>${escNl(d.how)}</p>
+        <h3>Objective</h3><p>${escNl(d.obj)}</p>
+        <h3>Coaching points</h3><p>${escNl(d.look)}</p>
         <div class="meta"><span>${levels[d.d]}</span><span>${esc(d.players)}</span><span>${esc(d.time)}</span><span>${esc(d.space)}</span></div>
       </div>
       ${photoBoxHTML(d)}
