@@ -457,6 +457,7 @@ async function renderPicker(){
       <span class="ptheme">${esc(d.t)}</span>
       <span class="ptime">${esc(d.time)}</span>
       <span class="plus">${inSet.has(d.n)?'&#10003;':'+'}</span>
+      ${d.photoUrl ? `<div class="phover"><img src="${d.photoUrl}" alt="Photo for ${esc(d.title)}"></div>` : ''}
     </div>`).join(''):'<div class="noplan">No drills match those filters.</div>';
   pickListEl.querySelectorAll('[data-add]').forEach(row=>{
     row.addEventListener('click',async ()=>{
