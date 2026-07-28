@@ -70,6 +70,13 @@
           <button class="f" data-type="diff" data-val="3" aria-pressed="false">Advanced</button>
           <span class="count" id="count">10 drills</span>
         </div>
+        <div class="row">
+          <span class="tag">Group</span>
+          <button class="f" data-type="group" data-val="all" aria-pressed="true">All</button>
+          <button class="f" data-type="group" data-val="Whole Team" aria-pressed="false">Whole Team</button>
+          <button class="f" data-type="group" data-val="Forwards" aria-pressed="false">Forwards</button>
+          <button class="f" data-type="group" data-val="Backs" aria-pressed="false">Backs</button>
+        </div>
       </div>
     </div>
     <main class="wrap">
@@ -161,6 +168,9 @@
               <option value="2">Intermediate</option>
               <option value="3">Advanced</option>
             </select>
+          </label>
+          <label>Group focus
+            <select id="f_group"></select>
           </label>
         </div>
         <div class="ffrow">

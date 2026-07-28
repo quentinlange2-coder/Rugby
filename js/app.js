@@ -26,6 +26,7 @@ const provider = new GoogleAuthProvider();
 
 const levels = {1:'Beginner',2:'Intermediate',3:'Advanced'};
 const THEMES = ["Tackle & contact","Attack skills","Defence skills","Team organisation","Game situation","Cardio"];
+const GROUPS = ["Whole Team","Forwards","Backs"];
 
 /* ---- one-time seed data (see note above) ---- */
 const SEED_DRILLS = [
@@ -255,12 +256,13 @@ let currentUser = null;
 const grid=document.getElementById('grid');
 const emptyEl=document.getElementById('empty');
 const countEl=document.getElementById('count');
-let browseState={theme:'all',diff:'all'};
+let browseState={theme:'all',diff:'all',group:'all'};
 
 function renderBrowse(){
   const list = activeDrills().filter(d=>
     (browseState.theme==='all'||d.t===browseState.theme) &&
-    (browseState.diff==='all'||String(d.d)===browseState.diff)
+    (browseState.diff==='all'||String(d.d)===browseState.diff) &&
+    (browseState.group==='all'||(d.g||'Whole Team')===browseState.group)
   );
   grid.innerHTML = list.map(d=>`
 <article data-n="${d.n}">
@@ -279,7 +281,7 @@ function renderBrowse(){
         <h3>How it runs</h3><p>${escNl(d.how)}</p>
         <h3>Objective</h3><p>${escNl(d.obj)}</p>
         <h3>Coaching points</h3><p>${escNl(d.look)}</p>
-        <div class="meta"><span>${levels[d.d]}</span><span>${esc(d.players)}</span><span>${esc(d.time)}</span><span>${esc(d.space)}</span></div>
+        <div class="meta"><span>${levels[d.d]}</span><span>${esc(d.g||'Whole Team')}</span><span>${esc(d.players)}</span><span>${esc(d.time)}</span><span>${esc(d.space)}</span></div>
       </div>
       ${photoBoxHTML(d)}
     </div>
@@ -393,7 +395,7 @@ const notesEl=document.getElementById('notes');
 const autoTimeEl=document.getElementById('autoTime');
 const overrideEl=document.getElementById('timeOverride');
 const pickListEl=document.getElementById('pickList');
-let pickState={theme:'all',diff:'all'};
+let pickState={theme:'all',diff:'all',group:'all'};
 
 function prettyDate(key){
   const [y,m,d]=key.split('-').map(Number);
@@ -449,7 +451,8 @@ async function renderPicker(){
   const inSet=new Set(s.drills||[]);
   const list=activeDrills().filter(d=>
     (pickState.theme==='all'||d.t===pickState.theme) &&
-    (pickState.diff==='all'||String(d.d)===pickState.diff)
+    (pickState.diff==='all'||String(d.d)===pickState.diff) &&
+    (pickState.group==='all'||(d.g||'Whole Team')===pickState.group)
   );
   pickListEl.innerHTML=list.length?list.map(d=>`
     <div class="pickrow ${inSet.has(d.n)?'in':''}" data-add="${d.n}">
@@ -496,6 +499,7 @@ const F = {
   title:  document.getElementById('f_title'),
   theme:  document.getElementById('f_theme'),
   d:      document.getElementById('f_diff'),
+  group:  document.getElementById('f_group'),
   players:document.getElementById('f_players'),
   time:   document.getElementById('f_time'),
   space:  document.getElementById('f_space'),
@@ -506,6 +510,7 @@ const F = {
 
 /* populate the theme dropdown once */
 F.theme.innerHTML = THEMES.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+F.group.innerHTML = GROUPS.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
 
 function openForm(drill){
   editingNum = drill ? drill.n : null;
@@ -513,6 +518,7 @@ function openForm(drill){
   F.title.value   = drill?.title || '';
   F.theme.value   = drill?.t || THEMES[0];
   F.d.value       = String(drill?.d || 1);
+  F.group.value   = drill?.g || 'Whole Team';
   F.players.value = drill?.players || '';
   F.time.value    = drill?.time || '';
   F.space.value   = drill?.space || '';
@@ -552,6 +558,7 @@ document.getElementById('saveForm').addEventListener('click',async ()=>{
     n:      editingNum!=null ? editingNum : drillStore.nextNum(),
     t:      F.theme.value,
     d:      parseInt(F.d.value,10),
+    g:      F.group.value,
     title,
     players:F.players.value.trim(),
     time:   F.time.value.trim(),
