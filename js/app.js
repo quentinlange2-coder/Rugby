@@ -179,7 +179,7 @@ const store = {
       const snap = await getDocs(collection(db, COL));
       return snap.docs.map(d=>d.id);
     }catch(e){ console.error('list failed', e); return []; }
-  }
+  },
   async loadAllInRange(from, to){
     const snap = await getDocs(collection(db, COL));
     return snap.docs
