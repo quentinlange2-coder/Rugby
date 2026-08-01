@@ -397,7 +397,7 @@ textarea.notes:focus{outline:1px solid var(--jersey);border-color:var(--jersey)}
 .barrow{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .barrow .blabel{width:150px;font-size:13px;color:var(--chalk);flex-shrink:0}
 .barrow .btrack{flex:1;height:10px;background:rgba(242,239,230,.08);border-radius:5px;overflow:hidden}
-.barrow .bfill{height:100%;background:var(--jersey);border-radius:5px}
+.barrow .bfill{display:block;height:100%;background:var(--jersey);border-radius:5px}
 .barrow .bval{width:70px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mud);flex-shrink:0}
 
 .statsempty{color:var(--mud);padding:14px 0;text-align:center}
