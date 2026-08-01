@@ -406,3 +406,26 @@ textarea.notes:focus{outline:1px solid var(--jersey);border-color:var(--jersey)}
   .statgrid{grid-template-columns:1fr}
   .barrow .blabel{width:100px;font-size:12px}
 }
+/* ============================================================
+   BEGINNER / MAIN TEAM SPLIT
+   ============================================================ */
+.squadgroup{margin-top:6px}
+.squadgroup + .squadgroup{margin-top:18px}
+.squadhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.squadhead h3{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--jersey);font-weight:600;margin:0;
+}
+.squadmin{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mud)}
+
+.addforhead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.addfor{display:flex;align-items:center;gap:8px}
+button.f.target[aria-pressed="true"]{background:var(--jersey);border-color:var(--jersey);color:#fff;font-weight:700}
+
+@media(max-width:640px){
+  .addforhead{flex-direction:column;align-items:flex-start}
+}
+.statsnote{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--mud);margin-bottom:14px;
+}

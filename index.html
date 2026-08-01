@@ -18,7 +18,7 @@
 </header>
 
 <!-- sign-in bar -->
-<div class="wrap"></div>
+<div class="wrap">
   <div class="authbar">
     <div class="menuwrap">
       <button class="iconbtn" id="statsMenuBtn" aria-label="Open menu" aria-haspopup="true" aria-expanded="false">
@@ -117,12 +117,35 @@
               override <input id="timeOverride" type="number" min="0" placeholder="&mdash;" aria-label="Override total minutes">
             </div>
           </div>
-          <ul class="chosen" id="chosen"></ul>
-          <div class="noplan" id="noplan">No drills yet. Add some from the list below.</div>
+          <div class="squadgroup">
+            <div class="squadhead">
+              <h3>Beginner team</h3>
+              <span class="squadmin" id="autoTimeBeg">0 min</span>
+            </div>
+            <ul class="chosen" id="chosenBeg"></ul>
+            <div class="noplan" id="noplanBeg">No drills yet for this squad.</div>
+          </div>
+
+          <div class="squadgroup">
+            <div class="squadhead">
+              <h3>Main team</h3>
+              <span class="squadmin" id="autoTimeMain">0 min</span>
+            </div>
+            <ul class="chosen" id="chosenMain"></ul>
+            <div class="noplan" id="noplanMain">No drills yet for this squad.</div>
+          </div>
+
           <h3 style="margin-top:20px">Session notes</h3>
           <textarea class="notes" id="notes" placeholder="Focus for the session, equipment, anything to remember&hellip;"></textarea>
           <div class="picker">
-            <h3>Add drills</h3>
+            <div class="addforhead">
+              <h3 style="margin-bottom:0">Add drills</h3>
+              <div class="addfor" role="group" aria-label="Adding drills for">
+                <span class="tag">Adding for</span>
+                <button class="f target" data-target="beg" aria-pressed="false">Beginner team</button>
+                <button class="f target" data-target="main" aria-pressed="true">Main team</button>
+              </div>
+            </div>
             <div class="row" style="margin-bottom:10px">
               <span class="tag">Theme</span>
               <button class="f" data-ptype="theme" data-val="all" aria-pressed="true">All</button>

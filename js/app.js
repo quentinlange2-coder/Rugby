@@ -49,12 +49,13 @@ const drillStore = {
     return DRILLS;
   },
   async seedIfEmpty(){
-    const snap = await getDocs(collection(db, DRILL_COL));
-    if(!snap.empty) return;
-    // fill an empty DB once with the starter drills
-    for(const d of SEED_DRILLS){
-      await setDoc(doc(db, DRILL_COL, String(d.n)), {...d, archived:false});
-    }
+    // Your database has had real drills in it for a long time now, so this
+    // is effectively inactive — kept only as a safe no-op in case the
+    // drills collection is ever completely empty again (e.g. a fresh
+    // Firebase project). It used to fill a brand-new database with a
+    // starter list; that starter list no longer exists in this file, so
+    // there is nothing to seed with. Add drills from the app instead.
+    return;
   },
   async save(d){                       // create or overwrite one drill
     await setDoc(doc(db, DRILL_COL, String(d.n)), d);
@@ -160,18 +161,39 @@ function wirePhotoBox(container, n, afterChange){
    SESSIONS IN FIRESTORE (unchanged from before)
    ============================================================ */
 const COL = 'sessions';
+
+/* Turns raw Firestore session data into the shape the app uses.
+   Old sessions only ever had a single `drills` list — those are
+   treated as Main team drills automatically, so nothing you've
+   already planned is lost or needs re-entering. */
+function normalizeSession(data){
+  if(!data) return {drillsBeg:[],drillsMain:[],notes:'',override:null};
+  return {
+    drillsBeg:  data.drillsBeg  || [],
+    drillsMain: data.drillsMain || data.drills || [],
+    notes: data.notes || '',
+    override: data.override!=null ? data.override : null
+  };
+}
+
 const store = {
   async load(date){
     try{
       const snap = await getDoc(doc(db, COL, date));
-      return snap.exists() ? snap.data() : {drills:[],notes:'',override:null};
-    }catch(e){ console.error('load failed', e); return {drills:[],notes:'',override:null}; }
+      return normalizeSession(snap.exists() ? snap.data() : null);
+    }catch(e){ console.error('load failed', e); return normalizeSession(null); }
   },
   async save(date, session){
-    const empty = (session.drills||[]).length===0 && !session.notes && session.override==null;
+    const empty = (session.drillsBeg||[]).length===0 && (session.drillsMain||[]).length===0
+                  && !session.notes && session.override==null;
     try{
       if(empty) await deleteDoc(doc(db, COL, date));
-      else      await setDoc(doc(db, COL, date), session);
+      else      await setDoc(doc(db, COL, date), {
+        drillsBeg: session.drillsBeg||[],
+        drillsMain: session.drillsMain||[],
+        notes: session.notes||'',
+        override: session.override!=null ? session.override : null
+      });
     }catch(e){ console.error('save failed', e); alert('Could not save — check your connection.'); }
   },
   async datesWithPlans(){
@@ -183,7 +205,7 @@ const store = {
   async loadAllInRange(from, to){
     const snap = await getDocs(collection(db, COL));
     return snap.docs
-      .map(d=>({date:d.id, ...d.data()}))
+      .map(d=>({date:d.id, ...normalizeSession(d.data())}))
       .filter(s=> s.date>=from && s.date<=to)
       .sort((a,b)=> a.date<b.date?-1:1);
   }
@@ -203,10 +225,9 @@ function computeStats(sessions){
   let totalMin=0;
   const usage={};
   for(const s of sessions){
-    const list=s.drills||[];
+    const list=s.drillsMain||[];   // stats count Main team drills only
     const auto=list.reduce((sum,n)=>{const d=drillByNum(n); return sum+(d?drillMinutes(d):0);},0);
-    const sessMin = s.override!=null ? s.override : auto;
-    totalMin += sessMin;
+    totalMin += auto;   // the whole-day override can mix both squads, so it's not used here
     list.forEach(n=>{
       const d=drillByNum(n); if(!d) return;
       const mins=drillMinutes(d);
@@ -242,6 +263,7 @@ async function renderStats(){
   const sessions = await store.loadAllInRange(from, to);
   const stats = computeStats(sessions);
   body.innerHTML = `
+    <div class="statsnote">Counts Main team drills only.</div>
     <div class="statgrid">
       <div class="statcard"><div class="n">${stats.sessions}</div><div class="l">Sessions</div></div>
       <div class="statcard"><div class="n">${stats.totalMin}</div><div class="l">Minutes trained</div></div>
@@ -424,13 +446,18 @@ document.getElementById('calPrev').addEventListener('click',async ()=>{ calMonth
 document.getElementById('calNext').addEventListener('click',async ()=>{ calMonth++; if(calMonth>11){calMonth=0;calYear++;} await renderCalendar(); });
 
 const sessDate=document.getElementById('sessDate');
-const chosenEl=document.getElementById('chosen');
-const noplanEl=document.getElementById('noplan');
+const chosenBegEl=document.getElementById('chosenBeg');
+const chosenMainEl=document.getElementById('chosenMain');
+const noplanBegEl=document.getElementById('noplanBeg');
+const noplanMainEl=document.getElementById('noplanMain');
+const autoTimeBegEl=document.getElementById('autoTimeBeg');
+const autoTimeMainEl=document.getElementById('autoTimeMain');
 const notesEl=document.getElementById('notes');
 const autoTimeEl=document.getElementById('autoTime');
 const overrideEl=document.getElementById('timeOverride');
 const pickListEl=document.getElementById('pickList');
 let pickState={theme:'all',diff:'all',group:'all'};
+let addTarget='main';   // which squad newly-added drills go to: 'beg' or 'main'
 
 function prettyDate(key){
   const [y,m,d]=key.split('-').map(Number);
@@ -442,30 +469,49 @@ function prettyDate(key){
 async function renderSession(){
   if(!selectedDate){
     sessDate.textContent='Select a day';
-    chosenEl.innerHTML=''; noplanEl.style.display='block';
+    chosenBegEl.innerHTML=''; chosenMainEl.innerHTML='';
+    noplanBegEl.style.display='block'; noplanMainEl.style.display='block';
     notesEl.value=''; overrideEl.value=''; autoTimeEl.textContent='0';
+    autoTimeBegEl.textContent='0 min'; autoTimeMainEl.textContent='0 min';
     pickListEl.innerHTML='<div class="noplan">Pick a day first.</div>';
     return;
   }
   const s=await store.load(selectedDate);
   sessDate.textContent=prettyDate(selectedDate);
 
-  chosenEl.innerHTML=(s.drills||[]).map(n=>{
-    const d=drillByNum(n); if(!d) return '';
-    return `<li>
-      <span class="cnum">${String(d.n).padStart(2,'0')}</span>
-      <span class="cname">${esc(d.title)}</span>
-      <span class="cmeta">${esc(d.time)}</span>
-      <button class="rm" data-rm="${n}" aria-label="Remove ${esc(d.title)}">&times;</button>
-    </li>`;
-  }).join('');
-  noplanEl.style.display=(s.drills||[]).length?'none':'block';
-  chosenEl.querySelectorAll('.rm').forEach(b=>{
-    b.addEventListener('click',async ()=>{ const s2=await store.load(selectedDate); s2.drills=(s2.drills||[]).filter(x=>x!==+b.dataset.rm); await store.save(selectedDate,s2); await renderSession(); await renderCalendar(); });
-  });
+  const squads = [
+    {key:'drillsBeg', listEl:chosenBegEl, noplanEl:noplanBegEl, timeEl:autoTimeBegEl},
+    {key:'drillsMain', listEl:chosenMainEl, noplanEl:noplanMainEl, timeEl:autoTimeMainEl}
+  ];
+  let combinedAuto=0;
+  for(const sq of squads){
+    const ids = s[sq.key]||[];
+    sq.listEl.innerHTML = ids.map(n=>{
+      const d=drillByNum(n); if(!d) return '';
+      return `<li>
+        <span class="cnum">${String(d.n).padStart(2,'0')}</span>
+        <span class="cname">${esc(d.title)}</span>
+        <span class="cmeta">${esc(d.time)}</span>
+        <button class="rm" data-rm="${n}" data-squad="${sq.key}" aria-label="Remove ${esc(d.title)}">&times;</button>
+      </li>`;
+    }).join('');
+    sq.noplanEl.style.display = ids.length ? 'none':'block';
+    const auto = ids.reduce((sum,n)=>{ const d=drillByNum(n); return sum+(d?drillMinutes(d):0); },0);
+    sq.timeEl.textContent = `${auto} min`;
+    combinedAuto += auto;
 
-  const auto=(s.drills||[]).reduce((sum,n)=>{ const d=drillByNum(n); return sum+(d?drillMinutes(d):0); },0);
-  autoTimeEl.textContent=auto;
+    sq.listEl.querySelectorAll('.rm').forEach(b=>{
+      b.addEventListener('click', async ()=>{
+        const key=b.dataset.squad;
+        const s2=await store.load(selectedDate);
+        s2[key]=(s2[key]||[]).filter(x=>x!==+b.dataset.rm);
+        await store.save(selectedDate,s2);
+        await renderSession(); await renderCalendar();
+      });
+    });
+  }
+
+  autoTimeEl.textContent=combinedAuto;
   overrideEl.value=s.override==null?'':s.override;
   notesEl.value=s.notes||'';
   notesEl.style.height='auto';
@@ -483,7 +529,8 @@ overrideEl.addEventListener('input',()=>{ if(!selectedDate)return; clearTimeout(
 
 async function renderPicker(){
   const s=await store.load(selectedDate);
-  const inSet=new Set(s.drills||[]);
+  const targetKey = addTarget==='beg' ? 'drillsBeg' : 'drillsMain';
+  const inSet=new Set(s[targetKey]||[]);
   const list=activeDrills().filter(d=>
     (pickState.theme==='all'||d.t===pickState.theme) &&
     (pickState.diff==='all'||String(d.d)===pickState.diff) &&
@@ -501,14 +548,22 @@ async function renderPicker(){
     row.addEventListener('click',async ()=>{
       const n=+row.dataset.add;
       const s2=await store.load(selectedDate);
-      s2.drills=s2.drills||[];
-      if(s2.drills.includes(n)) s2.drills=s2.drills.filter(x=>x!==n);
-      else s2.drills=[...s2.drills,n];
+      const key = addTarget==='beg' ? 'drillsBeg' : 'drillsMain';
+      s2[key]=s2[key]||[];
+      if(s2[key].includes(n)) s2[key]=s2[key].filter(x=>x!==n);
+      else s2[key]=[...s2[key],n];
       await store.save(selectedDate,s2);
       await renderSession(); await renderCalendar();
     });
   });
 }
+document.querySelectorAll('button.f.target').forEach(b=>{
+  b.addEventListener('click', async ()=>{
+    addTarget = b.dataset.target;
+    document.querySelectorAll('button.f.target').forEach(x=>x.setAttribute('aria-pressed', x===b));
+    if(selectedDate) await renderPicker();
+  });
+});
 document.querySelectorAll('button.f[data-ptype]').forEach(b=>{
   b.addEventListener('click',async ()=>{
     const t=b.dataset.ptype;
