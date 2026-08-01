@@ -28,68 +28,6 @@ const levels = {1:'Beginner',2:'Intermediate',3:'Advanced'};
 const THEMES = ["Tackle & contact","Attack skills","Defence skills","Team organisation","Game situation","Cardio"];
 const GROUPS = ["Whole Team","Forwards","Backs"];
 
-/* ---- one-time seed data (see note above) ---- */
-const SEED_DRILLS = [
- {n:1,t:"Tackle & contact",title:"Knee-Height Cheek-to-Cheek Tackles",d:1,
-  players:"Pairs",time:"10 min",space:"5m × 5m grids",
-  how:"Pairs kneel facing each other a metre apart. The tackler steps in, places the shoulder on the ball carrier's thigh, cheek to the outside hip, wraps both arms and rolls to the ground. Progress from kneeling to a crouch, then to a walk, then to a jog. Ball carrier stays passive throughout.",
-  obj:"Build a safe, low tackle technique with correct head placement before adding any speed.",
-  look:"Head behind or beside the carrier, never in front. Eyes open, arms wrapping and squeezing, tackler landing on top."},
-
- {n:2,t:"Tackle & contact",title:"Cone Gate Contact Cycle",d:2,
-  players:"Groups of 5",time:"12 min",space:"10m × 10m",
-  how:"A carrier runs through a 2m gate into a defender holding a shield. On contact, the carrier fights for a second push, goes to ground with the ball presented long, and two support players arrive to clear over the ball. Next carrier starts as soon as the ball is available. Run for 90-second blocks.",
-  obj:"Link the carry, the ground placement, and the arrival of support into one continuous rhythm.",
-  look:"Ball presented at full arm stretch away from the tackler. Support arriving low, in a straight line, and staying on their feet."},
-
- {n:3,t:"Attack skills",title:"Four-Cone Draw and Pass",d:1,
-  players:"Groups of 3–4",time:"10 min",space:"15m × 15m",
-  how:"Three attackers advance against two passive defenders standing on cones. The carrier must run at the inside shoulder of a defender to commit him, then pass late to the free runner. Rotate positions each rep. Progress by letting defenders drift or press.",
-  obj:"Teach players to fix a defender before releasing the ball, rather than passing early into space that closes.",
-  look:"Straight running lines, pass delivered after the defender commits, receiver taking the ball at pace."},
-
- {n:4,t:"Attack skills",title:"Two-Ball Overload Grid",d:3,
-  players:"8–12",time:"12 min",space:"20m × 20m",
-  how:"Two balls are live in the same grid at once, with attackers outnumbering defenders 4v3. Attackers must score by crossing the far line; if a ball is dropped or turned over, that ball resets to the coach and comes back in immediately from an unpredictable angle. Play continuous for three minutes.",
-  obj:"Force fast scanning and decision making when the picture keeps changing and the overlap is short-lived.",
-  look:"Heads up before receiving, players calling for the ball early, attackers using the extra man within two passes."},
-
- {n:5,t:"Defence skills",title:"Three-Gate Read and React",d:2,
-  players:"Groups of 6",time:"10 min",space:"20m × 15m",
-  how:"Three gates sit five metres apart on the attacking line. Two attackers set off and choose one gate at the last moment. Two defenders must communicate, decide who takes the ball and who covers the outside, and shut down the chosen gate. Attackers can pass once.",
-  obj:"Sharpen the read between the ball defender and the outside cover, and the call that separates them.",
-  look:"An early, loud call. Defenders moving up together, inside shoulder connected, no dog-legs in the line."},
-
- {n:6,t:"Defence skills",title:"Scramble Recovery Chase",d:3,
-  players:"10–14",time:"12 min",space:"Half pitch",
-  how:"The coach kicks or rolls the ball behind a defensive line that is facing away. On the whistle, defenders turn, locate the ball, and reorganise against three attackers who are already running. Defenders must fold back, secure the widest threat first, and force play to the touchline.",
-  obj:"Rebuild a defensive line under pressure once the original shape has been broken.",
-  look:"Fastest player covering the widest channel, communication while running backwards, defenders working in from the outside."},
-
- {n:7,t:"Team organisation",title:"Ruck Exit and Reset",d:2,
-  players:"Full squad",time:"15 min",space:"40m × 30m",
-  how:"Set a ruck at a marked point. On the call, forwards must be in their pods and backs at the correct depth within four seconds, then play two phases before resetting. The coach varies the ruck position across the field so players learn to adjust their spacing to the touchline.",
-  obj:"Make the attacking shape after each breakdown fast, automatic, and correct regardless of field position.",
-  look:"Depth of the receiving line, no players standing flat, pods square to the gainline, scrum-half arriving first."},
-
- {n:8,t:"Team organisation",title:"Lineout to First Phase Chain",d:3,
-  players:"Full squad",time:"15 min",space:"22m area",
-  how:"Run a lineout with a called variation, then play immediately into a pre-agreed first-phase strike move against a live defence. Repeat the same call four times, then change it. Defence is told the call on alternate reps so attackers must adapt when it is read.",
-  obj:"Connect set piece delivery to the first attacking phase without a pause in tempo.",
-  look:"Clean transfer from jumper to scrum-half, backs already moving as the ball leaves the lineout, a plan B when the move is read."},
-
- {n:9,t:"Game situation",title:"Last Five Minutes, Three Points Down",d:3,
-  players:"Full squad",time:"15 min",space:"Full pitch",
-  how:"Attackers start on their own 22 with a five-minute clock and a three-point deficit. Defence plays fully live. The attacking side must manage territory, decide between kicking for position and running, and choose whether to take a penalty at goal or go to the corner. Play the scenario twice, then swap sides.",
-  obj:"Rehearse the decisions and the composure that decide close matches.",
-  look:"Clear leadership voices, sensible kick choices, patience through phases instead of forcing a low-percentage pass."},
-
- {n:10,t:"Game situation",title:"Fourteen Players Under Pressure",d:2,
-  players:"Full squad",time:"12 min",space:"Half pitch",
-  how:"One team plays a defender down for a full four-minute block while the opposition attacks from 30 metres out. The short-handed side must reorganise its line, decide which channel to leave short, and buy time. Rotate which player is removed so different units have to adjust.",
-  obj:"Practise defending a numerical disadvantage without panic or a broken line.",
-  look:"The line staying connected rather than spreading thin, players talking through the gap, defenders slowing the ball at the breakdown."}
-];
 
 /* ============================================================
    DRILLS IN FIRESTORE
@@ -242,6 +180,13 @@ const store = {
       return snap.docs.map(d=>d.id);
     }catch(e){ console.error('list failed', e); return []; }
   }
+  async loadAllInRange(from, to){
+    const snap = await getDocs(collection(db, COL));
+    return snap.docs
+      .map(d=>({date:d.id, ...d.data()}))
+      .filter(s=> s.date>=from && s.date<=to)
+      .sort((a,b)=> a.date<b.date?-1:1);
+  }
 };
 
 async function checkIsCoach(){
@@ -249,6 +194,96 @@ async function checkIsCoach(){
   catch(e){ return false; }
 }
 let currentUser = null;
+
+/* ============================================================
+   STATS DASHBOARD
+   ============================================================ */
+function computeStats(sessions){
+  const themeMin={}, groupMin={};
+  let totalMin=0;
+  const usage={};
+  for(const s of sessions){
+    const list=s.drills||[];
+    const auto=list.reduce((sum,n)=>{const d=drillByNum(n); return sum+(d?drillMinutes(d):0);},0);
+    const sessMin = s.override!=null ? s.override : auto;
+    totalMin += sessMin;
+    list.forEach(n=>{
+      const d=drillByNum(n); if(!d) return;
+      const mins=drillMinutes(d);
+      themeMin[d.t]=(themeMin[d.t]||0)+mins;
+      const grp=d.g||'Whole Team';
+      groupMin[grp]=(groupMin[grp]||0)+mins;
+      usage[n]=(usage[n]||0)+1;
+    });
+  }
+  return { sessions: sessions.length, totalMin, avgMin: sessions.length?Math.round(totalMin/sessions.length):0, themeMin, groupMin, usage };
+}
+
+function barsHTML(dataObj){
+  const entries=Object.entries(dataObj).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length) return '<div class="statsempty">No data in this period.</div>';
+  const max=Math.max(...entries.map(e=>e[1]));
+  return entries.map(([label,mins])=>{
+    const pct = max? Math.round(mins/max*100) : 0;
+    return `<div class="barrow">
+      <span class="blabel">${esc(label)}</span>
+      <span class="btrack"><span class="bfill" style="width:${pct}%"></span></span>
+      <span class="bval">${mins} min</span>
+    </div>`;
+  }).join('');
+}
+
+async function renderStats(){
+  const from = document.getElementById('statFrom').value;
+  const to = document.getElementById('statTo').value;
+  const body = document.getElementById('statsBody');
+  if(!from || !to){ body.innerHTML='<div class="statsempty">Pick a start and end date.</div>'; return; }
+  body.innerHTML = '<div class="statsempty">Loading…</div>';
+  const sessions = await store.loadAllInRange(from, to);
+  const stats = computeStats(sessions);
+  body.innerHTML = `
+    <div class="statgrid">
+      <div class="statcard"><div class="n">${stats.sessions}</div><div class="l">Sessions</div></div>
+      <div class="statcard"><div class="n">${stats.totalMin}</div><div class="l">Minutes trained</div></div>
+      <div class="statcard"><div class="n">${stats.avgMin}</div><div class="l">Avg / session</div></div>
+    </div>
+    <div class="statshr">Theme breakdown</div>
+    ${barsHTML(stats.themeMin)}
+    <div class="statshr">Group focus</div>
+    ${barsHTML(stats.groupMin)}
+  `;
+}
+
+const statsMenuBtn=document.getElementById('statsMenuBtn');
+const statsDropdown=document.getElementById('statsDropdown');
+const openStatsBtn=document.getElementById('openStatsBtn');
+const statsOverlay=document.getElementById('statsOverlay');
+const closeStatsBtn=document.getElementById('closeStatsBtn');
+const statApply=document.getElementById('statApply');
+
+statsMenuBtn.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  const willOpen = statsDropdown.hidden;
+  statsDropdown.hidden = !willOpen;
+  statsMenuBtn.setAttribute('aria-expanded', willOpen);
+});
+document.addEventListener('click', ()=>{ statsDropdown.hidden = true; statsMenuBtn.setAttribute('aria-expanded','false'); });
+
+openStatsBtn.addEventListener('click', ()=>{
+  statsDropdown.hidden = true;
+  const toEl=document.getElementById('statTo'), fromEl=document.getElementById('statFrom');
+  if(!toEl.value){
+    const today=new Date();
+    const past=new Date(); past.setDate(past.getDate()-30);
+    toEl.value = today.toISOString().slice(0,10);
+    fromEl.value = past.toISOString().slice(0,10);
+  }
+  statsOverlay.hidden=false;
+  statsOverlay.classList.add('open');
+  renderStats();
+});
+closeStatsBtn.addEventListener('click', ()=>{ statsOverlay.hidden=true; statsOverlay.classList.remove('open'); });
+statApply.addEventListener('click', renderStats);
 
 /* ============================================================
    BROWSE VIEW  (reads live drills from Firestore)

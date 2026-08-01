@@ -18,11 +18,17 @@
 </header>
 
 <!-- sign-in bar -->
-<div class="wrap">
-  <div class="authbar">
-    <span class="who" id="whoami"></span>
-    <button class="ghost" id="signOutBtn" hidden>Sign out</button>
+<div class="authbar">
+  <div class="menuwrap">
+    <button class="iconbtn" id="statsMenuBtn" aria-label="Open menu" aria-haspopup="true" aria-expanded="false">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="9" width="3" height="7" fill="currentColor"/><rect x="7.5" y="5" width="3" height="11" fill="currentColor"/><rect x="13" y="1" width="3" height="15" fill="currentColor"/></svg>
+    </button>
+    <div class="dropdown" id="statsDropdown" hidden>
+      <button class="dropitem" id="openStatsBtn">Stats dashboard</button>
+    </div>
   </div>
+  <span class="who" id="whoami"></span>
+  <button class="ghost" id="signOutBtn" hidden>Sign out</button>
 </div>
 
 <!-- sign-in gate: shown until an approved coach signs in -->
@@ -209,6 +215,24 @@
       <div class="mlist" id="archivedList"></div>
     </main>
   </section>
+
+<!-- ============ STATS DASHBOARD (overlay) ============ -->
+  <div class="statsOverlay" id="statsOverlay" hidden>
+    <div class="statsPanel">
+      <div class="statsHead">
+        <h2>Stats dashboard</h2>
+        <button class="ghost" id="closeStatsBtn">Close</button>
+      </div>
+      <div class="row" style="margin:14px 0 22px">
+        <span class="tag">Period</span>
+        <input type="date" id="statFrom" aria-label="From date">
+        <span style="color:var(--mud);font-family:'IBM Plex Mono',monospace;font-size:12px">to</span>
+        <input type="date" id="statTo" aria-label="To date">
+        <button class="mbtn" id="statApply">Apply</button>
+      </div>
+      <div id="statsBody"></div>
+    </div>
+  </div>
 
 </div><!-- /plannerBody -->
 
